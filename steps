@@ -1,0 +1,25 @@
+STACK=nodejs-mongodb
+TEMPLATEPATH=https://s3.amazonaws.com/quickstart-reference/heptio/latest/templates/kubernetes-cluster-with-new-vpc.template
+AZ=us-east-1
+INGRESS=0.0.0.0/0
+KEYNAME=testuser
+
+aws cloudformation create-stack --stack-name $STACK \
+--template-body $TEMPLATEPATH \
+--capabilities CAPABILITY_NAMED_IAM \
+--parameters ParameterKey=AvailabilityZone,ParameterValue=$AZ \
+ParameterKey=AdminIngressLocation,ParameterValue=$INGRESS \
+ParameterKey=KeyName,ParameterValue=$KEYNAME
+
+aws cloudformation describe-stacks --query 'Stacks[*].Outputs[?OutputKey == `GetKubeConfigCommand`].OutputValue' --output text --stack-name $STACK
+
+export KUBECONFIG=$(pwd)/kubeconfig
+
+
+kubectl create serviceaccount --namespace kube-system tiller
+
+
+helm install nodejs
+
+helm install mongodb
+
